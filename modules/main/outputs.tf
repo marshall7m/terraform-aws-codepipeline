@@ -1,3 +1,7 @@
+output "name" {
+    value = aws_codepipeline.this[0].name
+}
+
 output "arn" {
     value = aws_codepipeline.this[0].arn
 }
