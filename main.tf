@@ -47,7 +47,7 @@ resource "aws_codepipeline" "this" {
           role_arn         = try(action.value.role_arn, null)
           region           = try(action.value.region, null)
           namespace        = try(action.value.namespace, null)
-          configuration    = try(action.value.configuration, null)
+          configuration    = try(action.value.configuration, {})
         }
       }
     }
