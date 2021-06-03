@@ -20,6 +20,7 @@ resource "aws_codepipeline" "this" {
     type     = "S3"
 
     dynamic "encryption_key" {
+      # if `var.cmk_arn` is not provided, uses default KMS key for S3
       for_each = var.cmk_arn != null ? [1] : []
       content {
         id   = var.cmk_arn
@@ -186,8 +187,17 @@ resource "aws_iam_role" "this" {
   )
 }
 
+resource "random_string" "artifact_bucket" {
+  count = var.enabled ? 1 : 0
+  length = 10
+  min_numeric = 5
+  special = false
+  lower = true
+  upper = false
+}
+
 resource "aws_s3_bucket" "artifacts" {
-  bucket = var.name
+  bucket = coalesce(var.artifact_bucket_name, lower("${var.name}-${random_string.artifact_bucket[0].result}"))
   acl    = "private"
   versioning {
     enabled = true
