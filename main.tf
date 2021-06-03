@@ -1,6 +1,8 @@
 locals {
   # Codepipeline action role ARNs
   action_role_arns = distinct(compact([for action in flatten(var.stages[*].actions) : try(action.role_arn, "")]))
+  # action role arns from the calling account
+  calling_account_action_role_arns = [for arn in local.action_role_arns : arn if split(":", arn)[4] == var.account_id]
   # Cross-account AWS account_ids
   trusted_cross_account_ids = distinct([for arn in local.action_role_arns : split(":", arn)[4] if split(":", arn)[4] != var.account_id])
   # Cross-account AWS role resources used for CodePipeline IAM permissions
@@ -90,9 +92,20 @@ data "aws_iam_policy_document" "permissions" {
   dynamic "statement" {
     for_each = length(local.trusted_cross_account_roles) > 0 ? [1] : []
     content {
+      sid = "CrossAccountActionAccess"
       effect    = "Allow"
       actions   = ["sts:AssumeRole"]
       resources = local.trusted_cross_account_roles
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(local.calling_account_action_role_arns) > 0 ? [1] : []
+    content {
+      sid = "PipelineAccountActionAccess"
+      effect    = "Allow"
+      actions   = ["sts:AssumeRole"]
+      resources = local.calling_account_action_role_arns
     }
   }
 
