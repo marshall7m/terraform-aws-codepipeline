@@ -32,7 +32,7 @@ variable "stages" {
       owner = string
       provider = string
       version = string
-      configuration = optional(map(string))
+      configuration = optional(map(any))
       input_artifacts = optional(list(string))
       output_artifacts = optional(list(string))
       role_arn = optional(string)

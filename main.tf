@@ -9,6 +9,9 @@ locals {
   trusted_cross_account_roles = formatlist("arn:aws:iam::%s:role/*", local.trusted_cross_account_ids)
   # Distinct CodePipeline action providers used for CodePipeline IAM permissions
   action_providers = distinct(flatten(var.stages[*].actions[*].provider))
+  convert_param_to_json = [
+    "EnvironmentVariables"
+  ]
 }
 
 resource "aws_codepipeline" "this" {
@@ -50,7 +53,8 @@ resource "aws_codepipeline" "this" {
           role_arn         = action.value.role_arn
           region           = action.value.region
           namespace        = action.value.namespace
-          configuration    = action.value.configuration
+          # WA: converts str params to object and then converts to json array. Needed since object attr values have to have same type
+          configuration    = merge(action.value.configuration, { for key,value in action.value.configuration: key => jsonencode(jsondecode(value)) if contains(local.convert_param_to_json, key)})
         }
       }
     }
