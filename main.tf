@@ -44,13 +44,13 @@ resource "aws_codepipeline" "this" {
           owner            = action.value.owner
           provider         = action.value.provider
           version          = action.value.version
-          input_artifacts  = try(action.value.input_artifacts, [])
-          output_artifacts = try(action.value.output_artifacts, [])
-          run_order        = try(action.value.run_order, null)
-          role_arn         = try(action.value.role_arn, null)
-          region           = try(action.value.region, null)
-          namespace        = try(action.value.namespace, null)
-          configuration    = try(action.value.configuration, {})
+          input_artifacts  = action.value.input_artifacts
+          output_artifacts = action.value.output_artifacts
+          run_order        = action.value.run_order
+          role_arn         = action.value.role_arn
+          region           = action.value.region
+          namespace        = action.value.namespace
+          configuration    = action.value.configuration
         }
       }
     }

@@ -4,10 +4,6 @@ locals {
 
 provider "random" {}
 
-resource "random_password" "this" {
-  length = 20
-}
-
 resource "random_id" "default" {
   byte_length = 8
 }
