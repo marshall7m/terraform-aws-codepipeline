@@ -11,6 +11,7 @@
 | Name | Version |
 |------|---------|
 | aws | >= 3.22 |
+| random | n/a |
 
 ## Inputs
 
@@ -32,7 +33,7 @@
 | role\_path | Path to create policy | `string` | `"/"` | no |
 | role\_permissions\_boundary | Permission boundary policy ARN used for CodePipeline service role | `string` | `""` | no |
 | role\_tags | Tags to add to CodePipeline role | `map(string)` | `{}` | no |
-| stages | List of pipeline stages (see: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/codepipeline) | `any` | n/a | yes |
+| stages | List of pipeline stages (see: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/codepipeline) | <pre>list(object({<br>    name = string<br>    actions = list(object({<br>      name             = string<br>      category         = string<br>      owner            = string<br>      provider         = string<br>      version          = string<br>      configuration    = optional(map(string))<br>      input_artifacts  = optional(list(string))<br>      output_artifacts = optional(list(string))<br>      role_arn         = optional(string)<br>      run_order        = optional(number)<br>      region           = optional(string)<br>      namespace        = optional(string)<br>    }))<br>  }))</pre> | n/a | yes |
 
 ## Outputs
 

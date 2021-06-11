@@ -24,21 +24,21 @@ variable "name" {
 
 variable "stages" {
   description = "List of pipeline stages (see: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/codepipeline)"
-  type        = list(object({
+  type = list(object({
     name = string
     actions = list(object({
-      name = string
-      category = string
-      owner = string
-      provider = string
-      version = string
-      configuration = optional(map(any))
-      input_artifacts = optional(list(string))
+      name             = string
+      category         = string
+      owner            = string
+      provider         = string
+      version          = string
+      configuration    = optional(map(string))
+      input_artifacts  = optional(list(string))
       output_artifacts = optional(list(string))
-      role_arn = optional(string)
-      run_order = optional(number)
-      region = optional(string)
-      namespace = optional(string)
+      role_arn         = optional(string)
+      run_order        = optional(number)
+      region           = optional(string)
+      namespace        = optional(string)
     }))
   }))
 }
