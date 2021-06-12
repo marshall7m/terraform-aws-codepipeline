@@ -61,11 +61,11 @@ resource "aws_codepipeline" "this" {
 #### IAM ####
 
 module "role" {
-  count                = var.enabled && var.role_arn == null ? 1 : 0
+  count  = var.enabled && var.role_arn == null ? 1 : 0
   source = "github.com/marshall7m/terraform-aws-iam/modules//iam-role"
-  
-  role_name                 = var.name
-  trusted_services = ["codepipeline.amazonaws.com"]
+
+  role_name               = var.name
+  trusted_services        = ["codepipeline.amazonaws.com"]
   custom_role_policy_arns = [aws_iam_policy.permissions[0].arn]
 
   role_tags = merge(
@@ -81,10 +81,9 @@ data "aws_iam_policy_document" "permissions" {
     sid    = "S3ArtifactBucketAccess"
     effect = "Allow"
     actions = [
-      "s3:Get*",
-      "s3:Put*"
+      "s3:*"
     ]
-    resources = ["arn:aws:s3:::${var.name}/*"]
+    resources = ["*"]
   }
 
   statement {
