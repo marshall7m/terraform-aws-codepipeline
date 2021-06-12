@@ -220,7 +220,7 @@ data "aws_iam_policy_document" "artifacts" {
   statement {
     sid    = "DenyInsecureConnections"
     effect = "Deny"
-    actions   = ["s3:PutObject"]
+    actions   = ["s3:*"]
     resources = ["arn:aws:s3:::${local.bucket_name}/*"]
     condition {
       test     = "Bool"
