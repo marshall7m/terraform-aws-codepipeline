@@ -204,11 +204,21 @@ resource "aws_s3_bucket" "artifacts" {
   policy = data.aws_iam_policy_document.artifacts.json
 }
 
+resource "aws_s3_bucket_policy" "artifacts" {
+  bucket = aws_s3_bucket.artifacts.id
+  policy = data.aws_iam_policy_document.artifacts.json
+}
+
+
 data "aws_iam_policy_document" "artifacts" {
   statement {
     sid    = "DenyUnencryptedUploads"
     effect = "Deny"
     actions   = ["s3:PutObject"]
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
     resources = ["arn:aws:s3:::${local.bucket_name}/*"]
     condition {
       test     = "StringNotEquals"
@@ -222,6 +232,10 @@ data "aws_iam_policy_document" "artifacts" {
     effect = "Deny"
     actions   = ["s3:*"]
     resources = ["arn:aws:s3:::${local.bucket_name}/*"]
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
     condition {
       test     = "Bool"
       variable = "aws:SecureTransport"
