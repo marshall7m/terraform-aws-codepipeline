@@ -10,7 +10,7 @@ output "arn" {
 
 output "role_arn" {
   description = "ARN of the IAM role that the pipeline will assume"
-  value       = try(aws_iam_role.this[0].arn, null)
+  value       = try(module.role[0].role_arn, var.role_arn)
 }
 
 output "artifact_bucket_id" {

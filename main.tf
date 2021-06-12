@@ -15,7 +15,7 @@ resource "aws_codepipeline" "this" {
   count = var.enabled ? 1 : 0
 
   name     = var.name
-  role_arn = var.role_arn != null ? var.role_arn : aws_iam_role.this[0].arn
+  role_arn = var.role_arn != null ? var.role_arn : module.role[0].role_arn
 
   artifact_store {
     location = aws_s3_bucket.artifacts.id
@@ -59,6 +59,20 @@ resource "aws_codepipeline" "this" {
 }
 
 #### IAM ####
+
+module "role" {
+  count                = var.enabled && var.role_arn == null ? 1 : 0
+  source = "github.com/marshall7m/terraform-aws-iam/modules//iam-role"
+  
+  role_name                 = var.name
+  trusted_services = ["codepipeline.amazonaws.com"]
+  custom_role_policy_arns = [aws_iam_policy.permissions[0].arn]
+
+  role_tags = merge(
+    var.role_tags,
+    var.common_tags
+  )
+}
 
 data "aws_iam_policy_document" "permissions" {
   count = var.role_arn == null ? 1 : 0
@@ -164,40 +178,6 @@ resource "aws_iam_policy" "permissions" {
   description = "Allows CodePipeline to assume defined service roles within the pipeline's actions and trigger AWS services defined within the pipeline's actions"
   path        = var.role_path
   policy      = data.aws_iam_policy_document.permissions[0].json
-}
-
-resource "aws_iam_role_policy_attachment" "permissions" {
-  count      = var.enabled ? 1 : 0
-  role       = var.role_arn != null ? var.role_arn : aws_iam_role.this[0].name
-  policy_arn = aws_iam_policy.permissions[0].arn
-}
-
-data "aws_iam_policy_document" "trust" {
-  count = var.role_arn == null ? 1 : 0
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["codepipeline.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role" "this" {
-  count                = var.enabled && var.role_arn == null ? 1 : 0
-  name                 = var.name
-  path                 = var.role_path
-  max_session_duration = var.role_max_session_duration
-  description          = var.role_description
-
-  force_detach_policies = var.role_force_detach_policies
-  permissions_boundary  = var.role_permissions_boundary
-  assume_role_policy    = data.aws_iam_policy_document.trust[0].json
-  tags = merge(
-    var.role_tags,
-    var.common_tags
-  )
 }
 
 resource "random_string" "artifact_bucket" {
