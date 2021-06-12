@@ -9,6 +9,7 @@ locals {
   trusted_cross_account_roles = formatlist("arn:aws:iam::%s:role/*", local.trusted_cross_account_ids)
   # Distinct CodePipeline action providers used for CodePipeline IAM permissions
   action_providers = distinct(flatten(var.stages[*].actions[*].provider))
+  bucket_name = coalesce(var.artifact_bucket_name, lower("${var.name}-${random_string.artifact_bucket[0].result}"))
 }
 
 resource "aws_codepipeline" "this" {
@@ -20,14 +21,10 @@ resource "aws_codepipeline" "this" {
   artifact_store {
     location = aws_s3_bucket.artifacts.id
     type     = "S3"
-
-    dynamic "encryption_key" {
-      # if `var.cmk_arn` is not provided, uses default KMS key for S3
-      for_each = var.cmk_arn != null ? [1] : []
-      content {
-        id   = var.cmk_arn
-        type = "KMS"
-      }
+  
+    encryption_key {
+      id = coalesce(var.cmk_arn, data.aws_kms_key.s3.arn)
+      type = "KMS"
     }
   }
 
@@ -189,11 +186,50 @@ resource "random_string" "artifact_bucket" {
 }
 
 resource "aws_s3_bucket" "artifacts" {
-  bucket = coalesce(var.artifact_bucket_name, lower("${var.name}-${random_string.artifact_bucket[0].result}"))
-  acl    = "private"
+  bucket        = local.bucket_name
+  acl           = "private"
+  force_destroy = true
   versioning {
     enabled = true
   }
-  force_destroy = var.artifact_bucket_force_destroy
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        kms_master_key_id = var.cmk_arn != null ? var.cmk_arn : data.aws_kms_key.s3.arn
+        sse_algorithm     = "aws:kms"
+      }
+    }
+  }
   tags          = var.artifact_bucket_tags
+  policy = data.aws_iam_policy_document.artifacts.json
+}
+
+data "aws_iam_policy_document" "artifacts" {
+  statement {
+    sid    = "DenyUnencryptedUploads"
+    effect = "Deny"
+    actions   = ["s3:PutObject"]
+    resources = ["arn:aws:s3:::${local.bucket_name}/*"]
+    condition {
+      test     = "StringNotEquals"
+      variable = "s3:x-amz-server-side-encryption"
+      values   = ["aws:kms"]
+    }
+  }
+
+  statement {
+    sid    = "DenyInsecureConnections"
+    effect = "Deny"
+    actions   = ["s3:PutObject"]
+    resources = ["arn:aws:s3:::${local.bucket_name}/*"]
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+data "aws_kms_key" "s3" {
+  key_id = "alias/aws/s3"
 }
